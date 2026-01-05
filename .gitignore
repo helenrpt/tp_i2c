@@ -1,0 +1,29 @@
+# Fichiers de build
+Debug/
+Release/
+*.elf
+*.bin
+*.hex
+*.map
+*.list
+*.su
+*.d
+*.o
+
+# Fichiers générés
+*.cyclo
+objects.list
+objects.mk
+sources.mk
+
+# Fichiers de configuration utilisateur
+*.launch
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+
+# Fichiers temporaires
+*~
+*.swp
+*.swo
