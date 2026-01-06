@@ -11,14 +11,14 @@ void LIS2DW12_Init(uint8_t Address)
 {
     uint8_t data;
 
-    // 1️⃣ Vérifier si le capteur répond
+    //check if device is connected
     if (!MPU_FindAdress(Address << 1))
     {
         printf("Erreur: LIS2DW12 non détecté à l'adresse 0x%02X\r\n", Address);
         return;
     }
 
-    // 2️⃣ Vérifier WHO_AM_I (0x0F) - doit retourner 0x44
+    // check WHO_AM_I register (0x0F) - should return 0x44
     MPU_Read(Address << 1, 0x0F, &data, 1);
     if (data == 0x44)
         printf("LIS2DW12 WHO_AM_I correct: 0x%02X\r\n", data);
@@ -28,22 +28,22 @@ void LIS2DW12_Init(uint8_t Address)
         return;
     }
 
-    // 3️⃣ Soft reset
+    //  Soft reset
     data = 0x40; // SOFT_RESET bit
     MPU_Write(Address << 1, 0x25, data);
-    SYSTICK_Delay(10); // Attendre la fin du reset
+    SYSTICK_Delay(10); // Wait for reset to complete
 
-    // 4️⃣ Activer Block Data Update (BDU) dans CTRL2 (0x21)
-    // BDU empêche la lecture de données non cohérentes pendant la mise à jour
+    // 4 Enable Block Data Update (BDU) in CTRL2 (0x21)
+    // BDU prevents reading inconsistent data during update
     data = 0x08; // Bit 3 = BDU
     MPU_Write(Address << 1, 0x21, data);
 
-    // 5️⃣ Configurer CTRL6 (0x25): Plage ±4g (selon doc ST)
+    //  Configurer CTRL6 (0x25): Plage ±4g (selon doc ST)
     // Bits [5:4] = 01 (±4g)
     data = 0x10; // 00010000
     MPU_Write(Address << 1, 0x25, data);
 
-    // 6️⃣ Configurer CTRL1 (0x20): ODR = 50 Hz, mode High-Performance (selon doc ST)
+    // Configure CTRL1 (0x20): ODR = 50 Hz, High-Performance mode (according to ST documentation)
     // Bits [7:4] = 0100 (50 Hz), Bits [3:2] = 01 (High-Performance mode)
     data = 0x44; // 01000100
     MPU_Write(Address << 1, 0x20, data);
@@ -51,7 +51,7 @@ void LIS2DW12_Init(uint8_t Address)
     // Attendre stabilisation (100ms comme recommandé)
     SYSTICK_Delay(100);
 
-    printf("LIS2DW12 initialisé: 50Hz, ±4g, mode High-Performance\r\n");
+    printf("LIS2DW12 initialized: 50Hz, ±4g, High-Performance mode\r\n");
 }
 
 // ========== LECTURE DES DONNÉES BRUTES ==========
