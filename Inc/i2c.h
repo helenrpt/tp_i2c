@@ -3,6 +3,7 @@
 
 
 void I2C_Init (void);
+uint8_t I2C_Scan(uint8_t *foundAddresses);
 void MPU_Write (uint8_t Address, uint8_t Reg, uint8_t Data);
 void MPU_Read (uint8_t Address, uint8_t Reg, uint8_t *buffer, uint8_t size);
 uint8_t MPU_FindAdress(uint8_t Address);

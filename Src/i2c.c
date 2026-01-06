@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdio.h>
 #include <stm32f446xx.h>
 #include "main.h"
 #include "gpio.h"
@@ -53,7 +54,24 @@ void I2C_Init (void)
 	I2C1->CR1 |= (1<<0);  // Enable I2C
 }
 
+uint8_t I2C_Scan(uint8_t *foundAddresses)
+{
+    uint8_t count = 0;
 
+    printf("Scanning I2C bus...\r\n");
+    
+    for (uint8_t addr = 0x08; addr <= 0x77; addr++)
+    {
+        if (MPU_FindAdress(addr << 1))
+        {
+            // Périphérique trouvé
+            foundAddresses[count++] = addr;
+            printf("I2C device found at address: 0x%02X\r\n", addr);
+        }
+    }
+
+    return count;
+}
 
 void MPU_Write (uint8_t Address, uint8_t Reg, uint8_t Data)
 {
