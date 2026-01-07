@@ -6,7 +6,78 @@ uint32_t SystemCoreClock = 16000000;
 uint32_t ticks = 0;
 
 //////////////////////////////////////////////
+////////////// TIM2 MOVEMENT TIMER ///////////
+//////////////////////////////////////////////
+
+static volatile uint8_t movement_detected_flag = 0;
+
+/**
+ * Initialiser TIM2 pour générer une interruption toutes les secondes
+ */
+void TIM2_MovementDetection_Init(void)
+{
+    // 1. Activer l'horloge de TIM2
+    RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
+    
+    // 2. S'assurer que le timer est arrêté avant configuration
+    TIM2->CR1 &= ~TIM_CR1_CEN;
+    
+    // 3. Réinitialiser le compteur
+    TIM2->CNT = 0;
+    
+    // 4. Configurer le prescaler et la période
+    // APB1 clock = 16 MHz (par défaut)
+    // Prescaler = 16000 - 1 => fréquence = 16MHz / 16000 = 1 kHz (1ms)
+    TIM2->PSC = 16000 - 1;
+    
+    // Auto-reload = 1000 - 1 => interruption toutes les 1000ms = 1s
+    TIM2->ARR = 1000 - 1;
+    
+    // 5. Générer un événement de mise à jour pour charger les valeurs
+    TIM2->EGR |= TIM_EGR_UG;
+    
+    // 6. Effacer le flag d'interruption de mise à jour
+    TIM2->SR &= ~TIM_SR_UIF;
+    
+    // 7. Activer l'interruption de mise à jour
+    TIM2->DIER |= TIM_DIER_UIE;  // Update interrupt enable
+    
+    // 8. Activer l'interruption TIM2 dans le NVIC
+    NVIC_SetPriority(TIM2_IRQn, 1);
+    NVIC_EnableIRQ(TIM2_IRQn);
+    
+    // 9. Démarrer le timer
+    TIM2->CR1 |= TIM_CR1_CEN;  // Counter enable
+}
+
+/**
+ * Récupérer le flag de mouvement
+ */
+uint8_t TIM2_GetMovementFlag(void)
+{
+    return movement_detected_flag;
+}
+
+/**
+ * Effacer le flag de mouvement
+ */
+void TIM2_ClearMovementFlag(void)
+{
+    movement_detected_flag = 0;
+}
+
+/**
+ * Fonction appelée par l'ISR pour mettre à jour le flag
+ */
+void TIM2_SetMovementFlag(uint8_t value)
+{
+    movement_detected_flag = value;
+}
+
+
+//////////////////////////////////////////////
 ////////////// SYSTICK TIMER /////////////////
+//////////////////////////////////////////////
 //////////////////////////////////////////////
 
 void SYSTICK_Init(void){

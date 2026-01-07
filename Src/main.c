@@ -10,10 +10,11 @@
 #include "i2c.h"
 #include "lis2dw12.h"
 #include "STTS751.h"
-#include "STTS751.h"
+#include "PCF8583.h"
 
 uint8_t devices[10];
 uint8_t nbDevices;
+uint8_t alarm = 0;
 
 int main(void)
 {
@@ -40,32 +41,66 @@ int main(void)
 	// Initialize the sensors
 	LIS2DW12_Init(0x19);     // Accelerometer
     STTS751_Init(0x4A);      // Temperature sensor
+	PCF8583_Init();    
+	
+	RTC_SetTime(11, 00, 00);// RTC
+	
+	// Initialiser le timer de détection de mouvement (interruption toutes les 1s)
+	TIM2_MovementDetection_Init();
+	printf("TIM2 initialized for movement detection\r\n");
 	
 	printf("\r\n===== Measurements begin =====\r\n\r\n");
 
+	uint8_t compteur_inactivite = 0;
+	uint8_t alarm = 0;
+	uint8_t display_counter = 0;
+
 	while(1)
 	{
-		SYSTICK_Delay(500); // Delay 200ms
+		SYSTICK_Delay(100); // Petit délai pour ne pas surcharger le CPU
+		display_counter++;
 		
-		movement_detected = Detect_Movement(0x19, 1.7f);
-		
-		if (movement_detected)
+		// Vérifier si le flag TIM2 est levé (1 seconde écoulée)
+		if (TIM2_GetAndClearFlag())
 		{
-			//printf("[MOUVEMENT] \r\n");
+			// Détecter le mouvement
+			uint8_t movement = Detect_Movement(0x19, 1.7f);
+			
+			if (movement)
+			{
+				compteur_inactivite = 0;
+				alarm = 0;
+			}
+			else
+			{
+				compteur_inactivite++;
+				if (compteur_inactivite >= 15)
+				{
+					alarm = 1;
+				}
+			}
 		}
-		else
+		
+		// Afficher toutes les 5 secondes (50 * 100ms = 5000ms)
+		if (display_counter >= 50)
 		{
-			//printf("[IMMOBILE]  \r\n");
+			display_counter = 0;
+			
+			RTC_ReadTime(&hour, &min, &second);
+			temp_float = STTS751_ReadTemperature(0x4A);
+			int16_t temp_int = (int16_t)(temp_float * 10.0f);
+			
+
+			printf("\n\r[%02d:%02d:%02d] Temp: %d.%d C - Inactivite: %ds\r\n", 
+				       hour, min, second, temp_int / 10, abs(temp_int % 10), compteur_inactivite);
+
+			if (alarm) {
+			printf("[ALARM] No movement detected for 15 seconds!\r\n");
+			}
+
 		}
 		
 
-        temp_float = STTS751_ReadTemperature(0x4A);
-        int16_t temp_int = (int16_t)(temp_float * 10.0f);
-        //printf("Temp=%d.%d C\r\n", temp_int / 10, abs(temp_int % 10));
-
-        RTC_ReadTime( hour, min, second);
-
-        printf("%d : %d : %d \n \r", hour, min, second );
 
 	}
 }
