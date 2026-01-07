@@ -10,6 +10,7 @@
 #include "i2c.h"
 #include "lis2dw12.h"
 #include "STTS751.h"
+#include "STTS751.h"
 
 uint8_t devices[10];
 uint8_t nbDevices;
@@ -19,6 +20,9 @@ int main(void)
 
 	uint8_t movement_detected;
     float temp_float;
+    uint8_t hour;
+    uint8_t min;
+    uint8_t second;
 	
 	FPU_Init();
 	GPIO_Init();
@@ -47,16 +51,21 @@ int main(void)
 		
 		if (movement_detected)
 		{
-			printf("[MOUVEMENT] \r\n");
+			//printf("[MOUVEMENT] \r\n");
 		}
 		else
 		{
-			printf("[IMMOBILE]  \r\n");
+			//printf("[IMMOBILE]  \r\n");
 		}
 		
 
         temp_float = STTS751_ReadTemperature(0x4A);
         int16_t temp_int = (int16_t)(temp_float * 10.0f);
-        printf("Temp=%d.%d C\r\n", temp_int / 10, abs(temp_int % 10));
+        //printf("Temp=%d.%d C\r\n", temp_int / 10, abs(temp_int % 10));
+
+        RTC_ReadTime( hour, min, second);
+
+        printf("%d : %d : %d \n \r", hour, min, second );
+
 	}
 }
